@@ -119,13 +119,24 @@ bot.on("message", msg => {
                 msg.reply(":exclamation: ***You don't have permiossion to change prefix.***")
             }
             break;
+        case "queue":
+            var server = servers[msg.guild.id];
+            if (server && server.dispatcher) {
+                server.queued = !server.queued
+                let e = new Discord.MessageEmbed();
+                e.setColor(0x339bff);
+                e.setDescription("Looping is now " + (server.queued ? "**enabled**" : "**disabled**"));
+                msg.channel.send(e)
+            }
+            break;
         case "play":
             function play(connection, message) {
                 var server = servers[message.guild.id];
                 var stream = ytdl(server.queue[0], { filter: 'audioonly' })
                 server.dispatcher = connection.play(stream)
                     .on("finish", () => {
-                        server.queue.shift();
+                        if (server.queued == false)
+                            server.queue.shift();
                         if (server.queue[0]) {
                             play(connection, message);
                         } else {
@@ -151,6 +162,7 @@ bot.on("message", msg => {
                 servers[msg.guild.id] = {
                     queue: [],
                     volume: 1,
+                    queued: false
                 }
             }
             var server = servers[msg.guild.id];
@@ -208,7 +220,10 @@ bot.on("message", msg => {
         case "skip":
             if (!msg.member.roles.cache.find(r => r.name === "Der Verwalter")) return msg.channel.send("You don't have any permissions to do it");
             var server = servers[msg.guild.id];
-            if (server && server.dispatcher) server.dispatcher.end();
+            if (server && server.dispatcher) {
+                if (server.queued) server.queue.shift();
+                server.dispatcher.end();
+            }
             msg.channel.send("***:fast_forward: Skipped!***");
             break;
         case "volume":
