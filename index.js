@@ -33,7 +33,22 @@ bot.on("guildMemberUpdate", (oldMember, newMember) => {
     // console.log(newMember.roles.member._roles)
 
     if (oldMember.roles.member._roles.length < newMember.roles.member._roles.length) {
-        channel.send(`Cześć ${newMember}!\nTo jest Twój kanał. Rozgość się ;-). Znajduje się tu dużo ciekawych rzeczy ;-). Ta wiadomość zniknie za 10 minut, żeby nie zaśmiecać kanału.`);
+        let oldRoles = oldMember.roles.member._roles
+        let newRoles = newMember.roles.member._roles
+
+        for (let i = 0; i < newRoles.length; i++) {
+            for (let j = 0; j < oldRoles.length; j++) {
+                if (oldRoles[j] == newRoles[i]) {
+                    newRoles.splice(i, 1);
+                }
+            }
+        }
+
+        let newRolesId = newRoles[0]
+        let nameOfRole = newMember.roles.cache.find(r => r.id = newRolesId)
+
+        if (nameOfRole.name == "Użytkownik")
+            channel.send(`Cześć ${newMember}!\nTo jest Twój kanał. Rozgość się ;-). Znajduje się tu dużo ciekawych rzeczy ;-). Ta wiadomość zniknie za 10 minut, żeby nie zaśmiecać kanału.`);
 
         // const embed = new Discord.RichEmbed()
         // .setColor('ORANGE')
@@ -130,24 +145,12 @@ bot.on("message", msg => {
             }
             break;
         case "play":
-            function play(connection, message) {
-                var server = servers[message.guild.id];
-                var stream = ytdl(server.queue[0], { filter: 'audioonly' })
-                server.dispatcher = connection.play(stream)
-                    .on("finish", () => {
-                        if (server.queued == false)
-                            server.queue.shift();
-                        if (server.queue[0]) {
-                            play(connection, message);
-                        } else {
-                            connection.disconnect();
-                            delete (server.dispatcher)
-                            // message.member.voice.channel.leave()
-                        }
-                    })
+            if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
+                var e = new Discord.MessageEmbed();
+                msg.react('❌');
+                e.setDescription("***:x: You don't have any permissions to do it.***")
+                return msg.channel.send(e);
             }
-
-
             if (!args[1]) {
                 msg.react('❌');
                 msg.channel.send("***You didn't tell me what to play.***");
@@ -203,7 +206,12 @@ bot.on("message", msg => {
             })
             break;
         case "stop":
-            if (!msg.member.roles.cache.find(r => r.name === "Der Verwalter")) return msg.channel.send("You don't have any permissions to do it");
+            if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
+                var e = new Discord.MessageEmbed();
+                msg.react('❌');
+                e.setDescription("***:x: You don't have any permissions to do it.***")
+                return msg.channel.send(e);
+            }
             var server = servers[msg.guild.id];
             if (server) {
                 server.queue = []
@@ -218,6 +226,12 @@ bot.on("message", msg => {
             }
             break;
         case "skip":
+            if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
+                var e = new Discord.MessageEmbed();
+                msg.react('❌');
+                e.setDescription("***:x: You don't have any permissions to do it.***")
+                return msg.channel.send(e);
+            }
             if (!msg.member.roles.cache.find(r => r.name === "Der Verwalter")) return msg.channel.send("You don't have any permissions to do it");
             var server = servers[msg.guild.id];
             if (server && server.dispatcher) {
@@ -227,6 +241,12 @@ bot.on("message", msg => {
             msg.channel.send("***:fast_forward: Skipped!***");
             break;
         case "volume":
+            if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
+                var e = new Discord.MessageEmbed();
+                msg.react('❌');
+                e.setDescription("***:x: You don't have any permissions to do it.***")
+                return msg.channel.send(e);
+            }
             var server = servers[msg.guild.id];
             if (server) {
                 if (!args[1]) msg.channel.send("Current volume: ***" + server.volume * 100 + "%***");
@@ -250,5 +270,22 @@ bot.on("message", msg => {
             break;
     }
 })
+
+function play(connection, message) {
+    var server = servers[message.guild.id];
+    var stream = ytdl(server.queue[0], { filter: 'audioonly' })
+    server.dispatcher = connection.play(stream)
+        .on("finish", () => {
+            if (server.queued == false)
+                server.queue.shift();
+            if (server.queue[0]) {
+                play(connection, message);
+            } else {
+                connection.disconnect();
+                delete (server.dispatcher)
+                // message.member.voice.channel.leave()
+            }
+        })
+}
 
 bot.login(process.env.BOT_TOKEN);
