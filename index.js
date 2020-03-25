@@ -96,7 +96,7 @@ bot.on("message", msg => {
             var e = new Discord.MessageEmbed();
             e.setTitle("Help box")
             e.addField("General", "`join` - use this command to attach this bot to a channel\n`leave` - use this command to get the bot out of the channel")
-            e.addField("Music control", "`play` - use this command to play the music. Use as a 2nd argument link or title from YouTube service\n`stop` - use it command to stop music and clear playlist\n`skip` - use this command to skip the music\n`volume` - use this command to see volume level or set it");
+            e.addField("Music control", "`play` - use this command to play the music. Use the YouTube link or title as a second argument\n`stop` - use this command to stop music and clear playlist\n`skip` - use this command to skip the music\m`queue` - use this command to enable / disable queue\n`np` - use this command to list the queue\n`remove` - use this command with the song index you want to remove from the playlist\n`volume` - use this command to see volume level or set it");
             e.addField("Other", "`prefix` - use this command to see current prefix or to set it");
             e.setThumbnail(bot.user.avatarURL())
             e.setFooter("I wish you a pleasant use. Regards. Administrator B");
@@ -184,11 +184,11 @@ bot.on("message", msg => {
                     e.setTitle(":play_pause: " + m.title + " / *" + m.timestamp + "*");
                     e.setColor(0xFF0000);
                     e.setDescription((m.url))
-                    e.setFooter("Added by " + msg.member.nickname)
+                    e.setFooter("Added by " + (msg.member.nickname == "null" ? msg.member.user.username : msg.member.nickname))
                     msg.channel.send(e);
 
                     if (ytdl.validateURL(m.url)) {
-                        server.queue.push(m.url);
+                        server.queue.push({ title: m.title, url: m.url });
                         if (server.dispatcher == null) {
                             if (!msg.guild.voiceConnection) {
                                 msg.member.voice.channel.join().then(connection => {
@@ -232,13 +232,61 @@ bot.on("message", msg => {
                 e.setDescription("***:x: You don't have any permissions to do it.***")
                 return msg.channel.send(e);
             }
-            if (!msg.member.roles.cache.find(r => r.name === "Der Verwalter")) return msg.channel.send("You don't have any permissions to do it");
+            // if (!msg.member.roles.cache.find(r => r.name === "Der Verwalter")) return msg.channel.send("You don't have any permissions to do it");
             var server = servers[msg.guild.id];
             if (server && server.dispatcher) {
                 if (server.queued) server.queue.shift();
                 server.dispatcher.end();
             }
             msg.channel.send("***:fast_forward: Skipped!***");
+            break;
+        case "np":
+            var server = servers[msg.guild.id];
+            if (server) {
+                let e = new Discord.MessageEmbed();
+                e.setTitle("Queue list")
+                let str = "";
+                for (let i = 1; i < server.queue.length; i++) {
+                    str += `#${i} - ${server.queue[i].title}\n`;
+                }
+                e.setDescription(str);
+                msg.channel.send(e)
+            } else {
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000)
+                e.setDescription(":exclamation: There is no song in the queue");
+                msg.channel.send(e)
+            }
+            break;
+        case "remove":
+            if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
+                var e = new Discord.MessageEmbed();
+                msg.react('❌');
+                e.setDescription("***:x: You don't have any permissions to do it.***")
+                return msg.channel.send(e);
+            }
+            if (!args[1]) {
+                let e = new Discord.MessageEmbed();
+                e.setDescription(":exclamation: Tis command requires a second argument");
+                return msg.channel.send(e);
+            }
+            var server = servers[msg.guild.id];
+            if (!isNaN(parseInt(args[1]))) {
+                if (server && server.queue.length > parseInt(args[1]) && parseInt(args[1]) > 0) {
+                    server.queue.splice(parseInt(args[1]), 1);
+                    msg.react('👌')
+                } else {
+                    let e = new Discord.MessageEmbed();
+                    e.setColor(0xff0000)
+                    e.setDescription(":exclamation: Wrong number");
+                    msg.channel.send(e)
+                }
+            } else {
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000)
+                e.setDescription(":exclamation: Wrong number");
+                msg.channel.send(e)
+            }
             break;
         case "volume":
             if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
@@ -273,7 +321,7 @@ bot.on("message", msg => {
 
 function play(connection, message) {
     var server = servers[message.guild.id];
-    var stream = ytdl(server.queue[0], { filter: 'audioonly' })
+    var stream = ytdl(server.queue[0].url, { filter: 'audioonly' })
     server.dispatcher = connection.play(stream)
         .on("finish", () => {
             if (server.queued == false)
