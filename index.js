@@ -93,10 +93,10 @@ bot.on("message", msg => {
             msg.channel.send("***I AM THE BEST. BETTER THAN PYTHON!!! (but not better than PHP)***")
             break;
         case "help":
-            var e = new Discord.MessageEmbed();
+            let e = new Discord.MessageEmbed();
             e.setTitle("Help box")
             e.addField("General", "`join` - use this command to attach this bot to a channel\n`leave` - use this command to get the bot out of the channel")
-            e.addField("Music control", "`play` - use this command to play the music. Use the YouTube link or title as a second argument\n`stop` - use this command to stop music and clear playlist\n`skip` - use this command to skip the music\m`queue` - use this command to enable / disable queue\n`np` - use this command to list the queue\n`remove` - use this command with the song index you want to remove from the playlist\n`volume` - use this command to see volume level or set it");
+            e.addField("Music control", "`play` - use this command to play the music. Use the YouTube link or title as a second argument\n`stop` - use this command to stop music and clear playlist\n`pause` - use this command to pause the song\n`resume` - use this command to resume the song\n`skip` - use this command to skip the music\m`queue` - use this command to enable / disable queue\n`np` - use this command to list the queue\n`remove` - use this command with the song index you want to remove from the playlist\n`volume` - use this command to see volume level or set it");
             e.addField("Other", "`prefix` - use this command to see current prefix or to set it");
             e.setThumbnail(bot.user.avatarURL())
             e.setFooter("I wish you a pleasant use. Regards. Administrator B");
@@ -104,6 +104,14 @@ bot.on("message", msg => {
             msg.channel.send(e);
             break;
         case "join":
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
+                return;
+            }
             if (msg.member.voice.channel) {
                 if (!msg.guild.voiceConnection) {
                     msg.member.voice.channel.join().then(() => {
@@ -116,6 +124,14 @@ bot.on("message", msg => {
             }
             break;
         case "leave":
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
+                return;
+            }
             if (!msg.guild.voiceConnection) {
                 try {
                     msg.member.voice.channel.leave();
@@ -146,7 +162,7 @@ bot.on("message", msg => {
             break;
         case "play":
             if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
-                var e = new Discord.MessageEmbed();
+                let e = new Discord.MessageEmbed();
                 msg.react('❌');
                 e.setDescription("***:x: You don't have any permissions to do it.***")
                 return msg.channel.send(e);
@@ -158,7 +174,15 @@ bot.on("message", msg => {
             }
             if (!msg.member.voice.channel) {
                 msg.react('❌');
-                msg.channel.send("***Please connect to a voice channel first!***");
+                msg.channel.send("***Please connect to a voice channel first***");
+                return;
+            }
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
                 return;
             }
             if (!servers[msg.guild.id]) {
@@ -184,7 +208,7 @@ bot.on("message", msg => {
                     e.setTitle(":play_pause: " + m.title + " / *" + m.timestamp + "*");
                     e.setColor(0xFF0000);
                     e.setDescription((m.url))
-                    e.setFooter("Added by " + (msg.member.nickname == "null" ? msg.member.user.username : msg.member.nickname))
+                    e.setFooter("Added by " + (msg.member.nickname == null ? msg.member.user.username : msg.member.nickname))
                     msg.channel.send(e);
 
                     if (ytdl.validateURL(m.url)) {
@@ -207,10 +231,18 @@ bot.on("message", msg => {
             break;
         case "stop":
             if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
-                var e = new Discord.MessageEmbed();
+                let e = new Discord.MessageEmbed();
                 msg.react('❌');
                 e.setDescription("***:x: You don't have any permissions to do it.***")
                 return msg.channel.send(e);
+            }
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
+                return;
             }
             var server = servers[msg.guild.id];
             if (server) {
@@ -225,9 +257,62 @@ bot.on("message", msg => {
                 msg.channel.send("***:x: Currently no music is being played***");
             }
             break;
+        case "pause":
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
+                return;
+            }
+            var server = servers[msg.guild.id];
+            if (server && server.dispatcher) {
+                if (!server.dispatcher.paused) {
+                    server.dispatcher.pause();
+                    msg.react('👌')
+                } else {
+                    let e = new Discord.MessageEmbed();
+                    e.setDescription("The music is already paused");
+                    e.setColor(0xff0000)
+                    msg.channel.send(e)
+                }
+            }
+            break;
+        case "resume":
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
+                return;
+            }
+            var server = servers[msg.guild.id];
+            if (server && server.dispatcher) {
+                if (server.dispatcher.paused) {
+                    server.dispatcher.resume();
+                    msg.react('👌')
+                }
+                else {
+                    let e = new Discord.MessageEmbed();
+                    e.setDescription("The music is already resumed");
+                    e.setColor(0xff0000)
+                    msg.channel.send(e)
+                }
+            }
+            break;
         case "skip":
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
+                return;
+            }
             if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
-                var e = new Discord.MessageEmbed();
+                let e = new Discord.MessageEmbed();
                 msg.react('❌');
                 e.setDescription("***:x: You don't have any permissions to do it.***")
                 return msg.channel.send(e);
@@ -241,8 +326,16 @@ bot.on("message", msg => {
             msg.channel.send("***:fast_forward: Skipped!***");
             break;
         case "np":
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
+                return;
+            }
             var server = servers[msg.guild.id];
-            if (server) {
+            if (server && server.queue.length > 0) {
                 let e = new Discord.MessageEmbed();
                 e.setTitle("Queue list")
                 let str = "";
@@ -259,8 +352,16 @@ bot.on("message", msg => {
             }
             break;
         case "remove":
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
+                return;
+            }
             if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
-                var e = new Discord.MessageEmbed();
+                let e = new Discord.MessageEmbed();
                 msg.react('❌');
                 e.setDescription("***:x: You don't have any permissions to do it.***")
                 return msg.channel.send(e);
@@ -289,8 +390,16 @@ bot.on("message", msg => {
             }
             break;
         case "volume":
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                let e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
+                return;
+            }
             if (!msg.member.roles.cache.find(r => r.name === 'DJ') && !msg.member.hasPermission("ADMINISTRATOR")) {
-                var e = new Discord.MessageEmbed();
+                let e = new Discord.MessageEmbed();
                 msg.react('❌');
                 e.setDescription("***:x: You don't have any permissions to do it.***")
                 return msg.channel.send(e);
@@ -315,6 +424,19 @@ bot.on("message", msg => {
                 msg.react('❌');
                 msg.channel.send("***Music is not currently playing.***");
             }
+            break;
+        case "resetServer":
+            let embed = new Discord.MessageEmbed();
+            if (!msg.member.hasPermission("ADMINISTRATOR")) {
+                msg.react('❌');
+                embed.setDescription("***:x: You don't have any permissions to do it.***")
+                return msg.channel.send(embed);
+            }
+            msg.delete();
+            server = {};
+            embed.setDescription(":white_check_mark: Server has been restarted!")
+            embed.setColor("green");
+            msg.channel.send(embed)
             break;
     }
 })
