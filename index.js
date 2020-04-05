@@ -10,7 +10,7 @@ var servers = {};
 
 bot.on("ready", () => {
     console.log("I am online");
-    bot.user.setActivity('JS is the best after PHP!', { type: "LISTENING" })
+    bot.user.setActivity('Zenka Martyniuka', { type: "LISTENING" })
 })
 
 bot.on('guildMemberAdd', member => {
