@@ -89,8 +89,8 @@ bot.on("message", msg => {
             msg.delete({ timeout: 3000 })
             msg.reply("Hello!").then(d => d.delete({ timeout: 3000 }));
             break;
-        case "aboutMe":
-            msg.channel.send("***I AM THE BEST. BETTER THAN PYTHON!!! (but not better than PHP)***")
+        case "weather":
+            msg.reply(":sunny: The weather is nice today. And you?");
             break;
         case "help":
             var e = new Discord.MessageEmbed();
@@ -446,7 +446,7 @@ bot.on("message", msg => {
                 msg.channel.send("***Music is not currently playing.***");
             }
             break;
-        case "resetServer":
+        case "restartServer":
             var embed = new Discord.MessageEmbed();
             if (!msg.member.hasPermission("ADMINISTRATOR")) {
                 msg.react('❌');
@@ -454,7 +454,7 @@ bot.on("message", msg => {
                 return msg.channel.send(embed);
             }
             msg.delete();
-            server = {};
+            servers = {};
             embed.setDescription(":white_check_mark: Server has been restarted!")
             embed.setColor("green");
             msg.channel.send(embed)
