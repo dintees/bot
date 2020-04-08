@@ -80,9 +80,9 @@ bot.on("message", msg => {
     // console.log(msg.content);
 
     if (!msg.member) {
-            msg.author.send("**Romantycznie tak pisać na priv :heart:, ale nie... Napisz do mnie na serwerze!**").catch(function(err) {
-                return;
-            })
+        msg.author.send("**Romantycznie tak pisać na priv :heart:, ale nie... Napisz do mnie na serwerze!**").catch(function (err) {
+            return;
+        })
         return;
     }
 
@@ -98,14 +98,14 @@ bot.on("message", msg => {
             msg.delete({ timeout: 3000 })
             msg.reply("Hello!").then(d => d.delete({ timeout: 3000 }));
             break;
-        case "aboutMe":
-            msg.channel.send("***I AM THE BEST. BETTER THAN PYTHON!!! (but not better than PHP)***")
+        case "weather":
+            msg.reply(":sunny: The weather is nice today. And you?");
             break;
         case "help":
             var e = new Discord.MessageEmbed();
             e.setTitle("Help box")
             e.addField("General", "`join` - use this command to attach this bot to a channel\n`leave` - use this command to get the bot out of the channel")
-            e.addField("Music control", "`play` - use this command to play the music. Use the YouTube link or title as a second argument\n`stop` - use this command to stop music and clear playlist\n`pause` - use this command to pause the song\n`resume` - use this command to resume the song\n`skip` - use this command to skip the music\n`queue` - use this command to enable / disable queue\n`np` - use this command to list the queue\n`current` - use this command to display the title of the song currently playing\n`remove` - use this command with the song index you want to remove from the playlist\n`volume` - use this command to see volume level or set it");
+            e.addField("Music control", "`play` - use this command to play the music. Use the YouTube link or title as a second argument\n`stop` - use this command to stop music and clear playlist\n`pause` - use this command to pause the song\n`resume` - use this command to resume the song\n`skip` - use this command to skip the music\n`queue` - use this command to enable / disable queue\n`np` - use this command to list the queue\n`current  ` - use this command to display the title of the song currently playing\n`remove` - use this command with the song index you want to remove from the playlist\n`volume` - use this command to see volume level or set it");
             e.addField("Other", "`prefix` - use this command to see current prefix or to set it\n`weather` - use this command to check the weather outside");
             e.setThumbnail(bot.user.avatarURL())
             e.setFooter("I wish you a pleasant use. Regards. Administrator B");
@@ -476,7 +476,7 @@ bot.on("message", msg => {
                 msg.channel.send("***Music is not currently playing.***");
             }
             break;
-        case "resetServer":
+            case "restartServer":
             var embed = new Discord.MessageEmbed();
             if (!msg.member.hasPermission("ADMINISTRATOR")) {
                 msg.react('❌');
@@ -484,7 +484,7 @@ bot.on("message", msg => {
                 return msg.channel.send(embed);
             }
             msg.delete();
-            server = {};
+            servers = {};
             embed.setDescription(":white_check_mark: Server has been restarted!")
             embed.setColor("green");
             msg.channel.send(embed)
