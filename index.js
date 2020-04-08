@@ -77,6 +77,15 @@ bot.on("message", msg => {
     //     return;
     // }
 
+    // console.log(msg.content);
+
+    if (!msg.member) {
+            msg.author.send("**Romantycznie tak pisać na priv :heart:, ale nie... Napisz do mnie na serwerze!**").catch(function(err) {
+                return;
+            })
+        return;
+    }
+
     if (msg.member.user.username == "Frooby" && msg.content.search("To jest Twój kanał. Rozgość się.") != -1) {
         msg.delete({ timeout: 10 * 60 * 1000 })
         return;
@@ -89,15 +98,15 @@ bot.on("message", msg => {
             msg.delete({ timeout: 3000 })
             msg.reply("Hello!").then(d => d.delete({ timeout: 3000 }));
             break;
-        case "weather":
-            msg.reply(":sunny: The weather is nice today. And you?");
+        case "aboutMe":
+            msg.channel.send("***I AM THE BEST. BETTER THAN PYTHON!!! (but not better than PHP)***")
             break;
         case "help":
             var e = new Discord.MessageEmbed();
             e.setTitle("Help box")
             e.addField("General", "`join` - use this command to attach this bot to a channel\n`leave` - use this command to get the bot out of the channel")
-            e.addField("Music control", "`play` - use this command to play the music. Use the YouTube link or title as a second argument\n`stop` - use this command to stop music and clear playlist\n`pause` - use this command to pause the song\n`resume` - use this command to resume the song\n`skip` - use this command to skip the music\n`queue` - use this command to enable / disable queue\n`np` - use this command to list the queue\n`remove` - use this command with the song index you want to remove from the playlist\n`volume` - use this command to see volume level or set it");
-            e.addField("Other", "`prefix` - use this command to see current prefix or to set it");
+            e.addField("Music control", "`play` - use this command to play the music. Use the YouTube link or title as a second argument\n`stop` - use this command to stop music and clear playlist\n`pause` - use this command to pause the song\n`resume` - use this command to resume the song\n`skip` - use this command to skip the music\n`queue` - use this command to enable / disable queue\n`np` - use this command to list the queue\n`current` - use this command to display the title of the song currently playing\n`remove` - use this command with the song index you want to remove from the playlist\n`volume` - use this command to see volume level or set it");
+            e.addField("Other", "`prefix` - use this command to see current prefix or to set it\n`weather` - use this command to check the weather outside");
             e.setThumbnail(bot.user.avatarURL())
             e.setFooter("I wish you a pleasant use. Regards. Administrator B");
             e.setColor(0x339bff);
@@ -335,7 +344,7 @@ bot.on("message", msg => {
                 return;
             }
             var server = servers[msg.guild.id];
-            if (server && server.queue.length > 0) {
+            if (server && server.queue.length > 1) {
                 var e = new Discord.MessageEmbed();
                 e.setTitle("Queue list")
                 let str = "";
@@ -343,6 +352,27 @@ bot.on("message", msg => {
                     str += `#${i} - ${server.queue[i].title}\n`;
                 }
                 e.setDescription(str);
+                msg.channel.send(e)
+            } else {
+                var e = new Discord.MessageEmbed();
+                e.setColor(0xff0000)
+                e.setDescription(":exclamation: There is no song in the queue");
+                msg.channel.send(e)
+            }
+            break;
+        case "current":
+            if (msg.member.voice.channel.id !== msg.guild.me.voice.channelID && msg.guild.me.voice.channelID) {
+                msg.react('❌');
+                var e = new Discord.MessageEmbed();
+                e.setColor(0xff0000);
+                e.setDescription("I am already being used by another user")
+                msg.channel.send(e);
+                return;
+            }
+            var server = servers[msg.guild.id];
+            if (server && server.queue.length > 0) {
+                var e = new Discord.MessageEmbed();
+                e.setDescription("Currently is playing: " + server.queue[0].title);
                 msg.channel.send(e)
             } else {
                 var e = new Discord.MessageEmbed();
@@ -446,7 +476,7 @@ bot.on("message", msg => {
                 msg.channel.send("***Music is not currently playing.***");
             }
             break;
-        case "restartServer":
+        case "resetServer":
             var embed = new Discord.MessageEmbed();
             if (!msg.member.hasPermission("ADMINISTRATOR")) {
                 msg.react('❌');
@@ -454,7 +484,7 @@ bot.on("message", msg => {
                 return msg.channel.send(embed);
             }
             msg.delete();
-            servers = {};
+            server = {};
             embed.setDescription(":white_check_mark: Server has been restarted!")
             embed.setColor("green");
             msg.channel.send(embed)
